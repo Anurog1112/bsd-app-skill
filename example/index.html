@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คิวดี — ตัวอย่างแอปตาม BSD App Skill</title>
+<script>
+// ===== ERROR REPORTER ===== (แยกจากโค้ดหลัก เพื่อจับ SyntaxError ของโค้ดหลักได้)
+window.APP_LOG = [];
+window.note = m => { APP_LOG.push(new Date().toLocaleTimeString('th-TH') + ' ' + m); APP_LOG.splice(0, APP_LOG.length - 15); };
+window.reportError = (message, where) => {
+  const report = ['/skill fix', 'ข้อความ error: ' + message, 'ตำแหน่ง: ' + where, 'หน้าจอ: ' + (location.hash || '#home'),
+    'การกระทำล่าสุด:', ...APP_LOG.map(x => '- ' + x)].join('\n');
+  const show = () => {
+    let box = document.getElementById('app-error');
+    if (!box) { box = document.createElement('div'); box.id = 'app-error'; box.setAttribute('role', 'alert');
+      box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px;border-radius:12px;font:14px/1.5 system-ui';
+      document.body.appendChild(box); }
+    box.textContent = 'เกิดข้อผิดพลาด: ' + message + ' (' + where + ') ' + (message === 'Script error.' ? 'รายละเอียดถูกซ่อน เปิด Console (F12) แล้วคัดลอกข้อความสีแดงมาด้วย ' : '');
+    const b = document.createElement('button'); b.textContent = 'คัดลอกรายงานบั๊ก'; b.style.cssText = 'min-height:44px;margin-left:8px';
+    b.onclick = () => navigator.clipboard?.writeText(report).then(() => { b.textContent = 'คัดลอกแล้ว วางในแชทได้เลย'; });
+    box.appendChild(b);
+    window.LAST_BUG_REPORT = report;
+  };
+  document.body ? show() : addEventListener('DOMContentLoaded', show);
+};
+addEventListener('error', e => reportError(e.message, (e.filename || '').split('/').pop() + ':' + e.lineno + ':' + e.colno));
+addEventListener('unhandledrejection', e => reportError(String(e.reason && e.reason.message || e.reason), 'promise'));
+</script>
+<link rel="stylesheet" href="style.css">
+<script src="script.js" defer></script>
+</head>
+<body>
+<header class="top"><strong>คิวดี</strong><span class="muted">ร้านตัดผมตัวอย่าง · ข้อมูลตัวอย่าง</span></header>
+<main>
+  <section id="home" data-screen>
+    <h1>จองคิว</h1>
+    <form id="queue-form" novalidate>
+      <label for="name">ชื่อ</label>
+      <input id="name" autocomplete="name">
+      <p class="err" id="name-error" aria-live="polite"></p>
+      <label for="phone">เบอร์โทร</label>
+      <input id="phone" type="tel" inputmode="tel" autocomplete="tel">
+      <p class="err" id="phone-error" aria-live="polite"></p>
+      <button type="button" data-action="save" class="primary">จองคิว</button>
+    </form>
+    <h2>คิววันนี้ <span id="count" class="muted"></span></h2>
+    <label class="sr" for="search">ค้นหาคิว</label>
+    <input id="search" type="search" placeholder="ค้นหาชื่อหรือเบอร์">
+    <ul id="list"></ul>
+    <p id="empty" class="muted">ยังไม่มีคิว เริ่มจองได้เลย</p>
+  </section>
+  <section id="weather" data-screen hidden>
+    <h1>อากาศกรุงเทพฯ ตอนนี้</h1>
+    <div id="weather-box" aria-live="polite"></div>
+  </section>
+</main>
+<nav class="tabs" aria-label="เมนูหลัก">
+  <a href="#home">คิว</a><a href="#weather">อากาศ</a>
+  <button type="button" data-action="test">ทดสอบ</button>
+</nav>
+<div id="test-report" role="status" hidden></div>
+</body>
+</html>
